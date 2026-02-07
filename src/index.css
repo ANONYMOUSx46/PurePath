@@ -1,0 +1,238 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+@layer base {
+  :root {
+    /* Warm Spiritual Palette */
+    --background: 45 30% 97%;
+    --foreground: 220 20% 18%;
+
+    --card: 45 40% 99%;
+    --card-foreground: 220 20% 18%;
+
+    --popover: 45 40% 99%;
+    --popover-foreground: 220 20% 18%;
+
+    /* Golden Amber - Spiritual Warmth */
+    --primary: 35 80% 50%;
+    --primary-foreground: 45 30% 98%;
+
+    /* Soft Sage - Calm */
+    --secondary: 150 20% 94%;
+    --secondary-foreground: 150 30% 25%;
+
+    /* Warm Cream - Subtle */
+    --muted: 40 25% 93%;
+    --muted-foreground: 220 10% 45%;
+
+    /* Deep Teal - Focus & Peace */
+    --accent: 175 40% 35%;
+    --accent-foreground: 175 20% 98%;
+
+    --destructive: 0 70% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 40 20% 88%;
+    --input: 40 20% 88%;
+    --ring: 35 80% 50%;
+
+    --radius: 1rem;
+
+    /* Custom Spiritual Colors */
+    --golden-light: 43 90% 65%;
+    --golden-glow: 40 85% 55%;
+    --warm-cream: 45 40% 96%;
+    --deep-teal: 175 45% 30%;
+    --soft-sage: 150 25% 85%;
+    --peaceful-blue: 210 40% 92%;
+    --ember: 25 85% 55%;
+    --calm-lavender: 270 30% 94%;
+
+    /* Gradients */
+    --gradient-golden: linear-gradient(135deg, hsl(43, 90%, 65%) 0%, hsl(35, 80%, 50%) 100%);
+    --gradient-peace: linear-gradient(180deg, hsl(45, 30%, 97%) 0%, hsl(40, 25%, 93%) 100%);
+    --gradient-calm: linear-gradient(135deg, hsl(175, 40%, 35%) 0%, hsl(190, 45%, 40%) 100%);
+    --gradient-emergency: linear-gradient(135deg, hsl(175, 45%, 30%) 0%, hsl(200, 50%, 25%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(45, 40%, 99%) 0%, hsl(40, 30%, 96%) 100%);
+
+    /* Shadows */
+    --shadow-soft: 0 4px 20px -4px hsl(35 60% 50% / 0.15);
+    --shadow-card: 0 8px 32px -8px hsl(35 60% 40% / 0.12);
+    --shadow-glow: 0 0 40px hsl(35 80% 50% / 0.25);
+    --shadow-teal: 0 8px 32px -8px hsl(175 45% 30% / 0.3);
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 220 25% 10%;
+    --foreground: 45 20% 95%;
+
+    --card: 220 20% 14%;
+    --card-foreground: 45 20% 95%;
+
+    --popover: 220 20% 14%;
+    --popover-foreground: 45 20% 95%;
+
+    --primary: 35 75% 55%;
+    --primary-foreground: 220 25% 10%;
+
+    --secondary: 220 15% 20%;
+    --secondary-foreground: 45 20% 90%;
+
+    --muted: 220 15% 18%;
+    --muted-foreground: 220 10% 60%;
+
+    --accent: 175 35% 45%;
+    --accent-foreground: 220 25% 10%;
+
+    --destructive: 0 60% 45%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 15% 22%;
+    --input: 220 15% 22%;
+    --ring: 35 75% 55%;
+
+    --golden-light: 40 70% 50%;
+    --golden-glow: 38 65% 45%;
+    --warm-cream: 220 15% 16%;
+    --deep-teal: 175 40% 40%;
+    --soft-sage: 150 15% 25%;
+    --peaceful-blue: 210 25% 20%;
+    --ember: 25 70% 50%;
+    --calm-lavender: 270 20% 22%;
+
+    --gradient-golden: linear-gradient(135deg, hsl(40, 70%, 50%) 0%, hsl(35, 75%, 45%) 100%);
+    --gradient-peace: linear-gradient(180deg, hsl(220, 25%, 10%) 0%, hsl(220, 20%, 14%) 100%);
+    --gradient-calm: linear-gradient(135deg, hsl(175, 40%, 40%) 0%, hsl(190, 40%, 45%) 100%);
+    --gradient-emergency: linear-gradient(135deg, hsl(175, 40%, 35%) 0%, hsl(200, 45%, 30%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(220, 20%, 14%) 0%, hsl(220, 18%, 12%) 100%);
+
+    --shadow-soft: 0 4px 20px -4px hsl(0 0% 0% / 0.3);
+    --shadow-card: 0 8px 32px -8px hsl(0 0% 0% / 0.4);
+    --shadow-glow: 0 0 40px hsl(35 75% 55% / 0.2);
+    --shadow-teal: 0 8px 32px -8px hsl(175 40% 40% / 0.25);
+
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Crimson Pro', Georgia, serif;
+    @apply font-semibold tracking-tight;
+  }
+}
+
+@layer utilities {
+  .font-serif {
+    font-family: 'Crimson Pro', Georgia, serif;
+  }
+
+  .font-sans {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  .gradient-golden {
+    background: var(--gradient-golden);
+  }
+
+  .gradient-peace {
+    background: var(--gradient-peace);
+  }
+
+  .gradient-calm {
+    background: var(--gradient-calm);
+  }
+
+  .gradient-emergency {
+    background: var(--gradient-emergency);
+  }
+
+  .gradient-card {
+    background: var(--gradient-card);
+  }
+
+  .shadow-soft {
+    box-shadow: var(--shadow-soft);
+  }
+
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+
+  .shadow-glow {
+    box-shadow: var(--shadow-glow);
+  }
+
+  .shadow-teal {
+    box-shadow: var(--shadow-teal);
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Breathing animation for calm states */
+  @keyframes breathe {
+    0%, 100% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.05); opacity: 1; }
+  }
+
+  @keyframes pulse-gentle {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  @keyframes glow {
+    0%, 100% { box-shadow: 0 0 20px hsl(35 80% 50% / 0.3); }
+    50% { box-shadow: 0 0 40px hsl(35 80% 50% / 0.5); }
+  }
+
+  .animate-breathe {
+    animation: breathe 4s ease-in-out infinite;
+  }
+
+  .animate-pulse-gentle {
+    animation: pulse-gentle 3s ease-in-out infinite;
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-glow {
+    animation: glow 3s ease-in-out infinite;
+  }
+}
