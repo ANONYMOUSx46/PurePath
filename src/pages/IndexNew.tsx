@@ -241,7 +241,7 @@ const IndexNew = () => {
       <header className="px-6 pt-12 pb-6">
         <div className="animate-fade-in">
           <p className="text-muted-foreground text-sm mb-1">{greeting}</p>
-          <h1 className="font-serif text-3xl font-bold text-foreground">Guardian</h1>
+          <h1 className="font-serif text-3xl font-bold text-foreground">{user?.email?.split('@')[0] || 'Friend'}</h1>
         </div>
       </header>
 
