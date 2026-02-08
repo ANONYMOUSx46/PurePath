@@ -5,24 +5,216 @@ import { TemptationMode } from "@/components/TemptationMode";
 import { QuickActions } from "@/components/QuickActions";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { useStreak } from "@/lib/streak";
-import { Flame, Check, Trophy, TrendingUp, Calendar } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { Flame, Check, Trophy, TrendingUp, Calendar, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+
+interface StreakData {
+  currentStreak: number;
+  longestStreak: number;
+  lastCheckIn: string | null;
+  canCheckInToday: boolean;
+  todayCheckedIn: boolean;
+}
 
 const IndexNew = () => {
   const { user } = useAuth();
-  const { streak, isLoading, checkIn } = useStreak(user?.id);
+  const [streak, setStreak] = useState<StreakData>({
+    currentStreak: 0,
+    longestStreak: 0,
+    lastCheckIn: null,
+    canCheckInToday: true,
+    todayCheckedIn: false,
+  });
   const [showTemptationMode, setShowTemptationMode] = useState(false);
   const [isCheckingIn, setIsCheckingIn] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   // Get current time for greeting
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
+  useEffect(() => {
+    if (user) {
+      fetchStreak();
+    }
+  }, [user]);
+
+  const fetchStreak = async () => {
+    if (!user) {
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      // Get user profile
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('streak_current, streak_longest')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) {
+        console.error('Profile error:', profileError);
+        // If profile doesn't exist, create it
+        if (profileError.code === 'PGRST116') {
+          await createProfile();
+          return;
+        }
+        throw profileError;
+      }
+
+      // Get today's check-in
+      const today = new Date().toISOString().split('T')[0];
+      const { data: todayLog } = await supabase
+        .from('streak_logs')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('log_date', today)
+        .maybeSingle();
+
+      // Get last check-in
+      const { data: lastLog } = await supabase
+        .from('streak_logs')
+        .select('log_date')
+        .eq('user_id', user.id)
+        .order('log_date', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      setStreak({
+        currentStreak: profile?.streak_current || 0,
+        longestStreak: profile?.streak_longest || 0,
+        lastCheckIn: lastLog?.log_date || null,
+        canCheckInToday: !todayLog,
+        todayCheckedIn: !!todayLog,
+      });
+    } catch (error: any) {
+      console.error('Error fetching streak:', error);
+      toast.error('Failed to load streak data', {
+        description: error.message,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const createProfile = async () => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .insert({
+          id: user.id,
+          email: user.email,
+          streak_current: 0,
+          streak_longest: 0,
+          notification_settings: true,
+        });
+
+      if (error) throw error;
+
+      // Retry fetching
+      await fetchStreak();
+    } catch (error: any) {
+      console.error('Error creating profile:', error);
+      toast.error('Failed to create profile', {
+        description: error.message,
+      });
+    }
+  };
+
   const handleCheckIn = async () => {
+    if (!user || !streak.canCheckInToday) {
+      toast.error('Already checked in today!');
+      return;
+    }
+
     setIsCheckingIn(true);
-    await checkIn();
-    setIsCheckingIn(false);
+
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+
+      // Insert today's log
+      const { error: insertError } = await supabase
+        .from('streak_logs')
+        .insert({
+          user_id: user.id,
+          log_date: today,
+        });
+
+      if (insertError) throw insertError;
+
+      // Check if yesterday was logged
+      const { data: yesterdayLog } = await supabase
+        .from('streak_logs')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('log_date', yesterday)
+        .maybeSingle();
+
+      // Calculate new streak
+      let newCurrentStreak = 1;
+      if (yesterdayLog) {
+        newCurrentStreak = streak.currentStreak + 1;
+      }
+
+      const newLongestStreak = Math.max(newCurrentStreak, streak.longestStreak);
+
+      // Update profile
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          streak_current: newCurrentStreak,
+          streak_longest: newLongestStreak,
+        })
+        .eq('id', user.id);
+
+      if (updateError) throw updateError;
+
+      setStreak({
+        currentStreak: newCurrentStreak,
+        longestStreak: newLongestStreak,
+        lastCheckIn: today,
+        canCheckInToday: false,
+        todayCheckedIn: true,
+      });
+
+      // Show celebration message
+      if (newCurrentStreak === 1) {
+        toast.success('Great start!', {
+          description: 'You\'ve started your journey. Come back tomorrow!',
+        });
+      } else if (newCurrentStreak === 7) {
+        toast.success('🎉 One week strong!', {
+          description: 'You\'re building a great habit!',
+        });
+      } else if (newCurrentStreak === 30) {
+        toast.success('🏆 30 days! Incredible!', {
+          description: 'You\'re a champion of consistency!',
+        });
+      } else if (newCurrentStreak % 10 === 0) {
+        toast.success(`${newCurrentStreak} days!`, {
+          description: 'You\'re amazing! Keep it up!',
+        });
+      } else {
+        toast.success(`Day ${newCurrentStreak}!`, {
+          description: 'Another day of faithfulness ✨',
+        });
+      }
+    } catch (error: any) {
+      console.error('Error checking in:', error);
+      toast.error('Failed to check in', {
+        description: error.message,
+      });
+    } finally {
+      setIsCheckingIn(false);
+    }
   };
 
   // Calculate progress for circular progress
@@ -30,13 +222,24 @@ const IndexNew = () => {
   const circumference = 2 * Math.PI * 45;
   const strokeDashoffset = circumference - (progress / 100) * circumference;
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen gradient-peace pb-24 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading your journey...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen gradient-peace pb-24">
       {/* Header */}
       <header className="px-6 pt-12 pb-6">
         <div className="animate-fade-in">
           <p className="text-muted-foreground text-sm mb-1">{greeting}</p>
-          <h1 className="font-serif text-3xl font-bold text-foreground">PurePath</h1>
+          <h1 className="font-serif text-3xl font-bold text-foreground">Guardian</h1>
         </div>
       </header>
 
@@ -115,10 +318,13 @@ const IndexNew = () => {
                     size="lg"
                     className="w-full mb-2"
                     onClick={handleCheckIn}
-                    disabled={isCheckingIn || isLoading}
+                    disabled={isCheckingIn}
                   >
                     {isCheckingIn ? (
-                      'Checking in...'
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Checking in...
+                      </>
                     ) : (
                       <>
                         <Calendar className="w-4 h-4 mr-2" />
