@@ -21,12 +21,20 @@ const ProfileNew = () => {
       fetchProfile();
     }
     checkPushStatus();
+    // Load dark mode preference from localStorage on mount
+    loadDarkModePreference();
   }, [user]);
 
-  useEffect(() => {
-    // Check if dark mode is already enabled
-    setDarkMode(document.documentElement.classList.contains('dark'));
-  }, []);
+  const loadDarkModePreference = () => {
+    const saved = localStorage.getItem('darkMode');
+    const isDark = saved === 'true';
+    setDarkMode(isDark);
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  };
 
   const checkPushStatus = () => {
     if (pushNotificationService.isSupported()) {
@@ -57,6 +65,9 @@ const ProfileNew = () => {
 
   const handleDarkModeToggle = (checked: boolean) => {
     setDarkMode(checked);
+    // Save to localStorage
+    localStorage.setItem('darkMode', checked.toString());
+    
     if (checked) {
       document.documentElement.classList.add('dark');
       toast.success("Dark mode enabled", { description: "Easier on the eyes during evening devotions" });
@@ -275,14 +286,14 @@ const ProfileNew = () => {
 
           {/* About */}
           <button 
-            onClick={() => handleMenuClick("About PurePath")}
+            onClick={() => handleMenuClick("About Guardian")}
             className="w-full flex items-center justify-between px-4 py-4 border-b border-border hover:bg-muted/50 transition-colors"
           >
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg gradient-golden flex items-center justify-center">
                 <Heart className="w-5 h-5 text-primary-foreground" />
               </div>
-              <span className="font-medium text-foreground">About PurePath</span>
+              <span className="font-medium text-foreground">About Guardian</span>
             </div>
             <ChevronRight className="w-5 h-5 text-muted-foreground" />
           </button>
@@ -314,7 +325,7 @@ const ProfileNew = () => {
 
         {/* Version */}
         <p className="text-center text-xs text-muted-foreground pb-4">
-          PurePath v1.0.0 • Made with ❤️ By Liam De Wet
+          Guardian v1.0.0 • Made with ❤️
         </p>
       </main>
 
