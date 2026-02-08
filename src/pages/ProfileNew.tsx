@@ -286,14 +286,14 @@ const ProfileNew = () => {
 
           {/* About */}
           <button 
-            onClick={() => handleMenuClick("About Guardian")}
+            onClick={() => handleMenuClick("About PurePath")}
             className="w-full flex items-center justify-between px-4 py-4 border-b border-border hover:bg-muted/50 transition-colors"
           >
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg gradient-golden flex items-center justify-center">
                 <Heart className="w-5 h-5 text-primary-foreground" />
               </div>
-              <span className="font-medium text-foreground">About Guardian</span>
+              <span className="font-medium text-foreground">About PurePath</span>
             </div>
             <ChevronRight className="w-5 h-5 text-muted-foreground" />
           </button>
@@ -325,7 +325,7 @@ const ProfileNew = () => {
 
         {/* Version */}
         <p className="text-center text-xs text-muted-foreground pb-4">
-          Guardian v1.0.0 • Made with ❤️
+          Guardian v1.0.0 • Made with ❤️ By Liam De Wet
         </p>
       </main>
 
