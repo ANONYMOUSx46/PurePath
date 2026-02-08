@@ -275,7 +275,7 @@ const ProfileNew = () => {
 
           {/* About */}
           <button 
-            onClick={() => handleMenuClick("About Guardian")}
+            onClick={() => handleMenuClick("About PurePath")}
             className="w-full flex items-center justify-between px-4 py-4 border-b border-border hover:bg-muted/50 transition-colors"
           >
             <div className="flex items-center gap-3">
