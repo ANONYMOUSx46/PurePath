@@ -11,6 +11,7 @@ import JourneyNew from "./pages/JourneyNew";
 import ProfileNew from "./pages/ProfileNew";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import ResetPassword from "./pages/ResetPassword";
 
 const queryClient = new QueryClient();
 
@@ -74,6 +75,7 @@ const App = () => (
                 </PublicRoute>
               }
             />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route
               path="/"
               element={
