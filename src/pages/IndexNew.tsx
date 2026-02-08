@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { BottomNav } from "@/components/BottomNav";
 import { DailyVerse } from "@/components/DailyVerse";
 import { TemptationMode } from "@/components/TemptationMode";
@@ -6,7 +7,7 @@ import { QuickActions } from "@/components/QuickActions";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
-import { Flame, Check, Trophy, TrendingUp, Calendar, Loader2 } from "lucide-react";
+import { Flame, Check, Trophy, TrendingUp, Calendar, Loader2, Play } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +21,7 @@ interface StreakData {
 
 const IndexNew = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [streak, setStreak] = useState<StreakData>({
     currentStreak: 0,
     longestStreak: 0,
@@ -366,18 +368,33 @@ const IndexNew = () => {
           <QuickActions onTemptationMode={() => setShowTemptationMode(true)} />
         </div>
 
-        {/* Recommended Talk Preview */}
-        <div className="gradient-card rounded-2xl p-6 shadow-card animate-fade-in" style={{ animationDelay: "0.3s" }}>
-          <h3 className="font-serif text-lg font-semibold text-foreground mb-2">Today's Reflection</h3>
+        {/* Recommended Talk Preview - NOW CLICKABLE */}
+        <button 
+          onClick={() => navigate('/journey')}
+          className="w-full gradient-card rounded-2xl p-6 shadow-card animate-fade-in hover:shadow-glow transition-all duration-300 text-left group"
+          style={{ animationDelay: "0.3s" }}
+        >
+          <h3 className="font-serif text-lg font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">
+            Today's Reflection
+          </h3>
           <p className="text-sm text-muted-foreground mb-4">
-            "Finding Peace in the Storm" — A 5-minute meditation on trusting God's plan.
+            Save inspiring videos and talks to watch anytime. Tap to add your first video!
           </p>
-          <div className="w-full h-32 rounded-xl bg-muted flex items-center justify-center">
-            <div className="w-12 h-12 rounded-full gradient-golden flex items-center justify-center shadow-glow">
-              <div className="w-0 h-0 border-l-[12px] border-l-primary-foreground border-y-[8px] border-y-transparent ml-1" />
+          <div className="w-full h-32 rounded-xl bg-muted flex items-center justify-center group-hover:bg-muted/80 transition-colors relative overflow-hidden">
+            {/* Animated background */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
+            
+            {/* Play button */}
+            <div className="w-16 h-16 rounded-full gradient-golden flex items-center justify-center shadow-glow group-hover:scale-110 transition-transform relative z-10">
+              <Play className="w-8 h-8 text-primary-foreground ml-1" />
             </div>
           </div>
-        </div>
+          
+          {/* Hint text */}
+          <p className="text-xs text-center text-muted-foreground mt-3 group-hover:text-primary transition-colors">
+            Tap to explore your video library →
+          </p>
+        </button>
       </main>
 
       {/* Temptation Mode Overlay */}
