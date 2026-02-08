@@ -314,7 +314,7 @@ const ProfileNew = () => {
 
         {/* Version */}
         <p className="text-center text-xs text-muted-foreground pb-4">
-          PurePath v1.0.0 • Made with ❤️
+          PurePath v1.0.0 • Made with ❤️ By Liam De Wet
         </p>
       </main>
 
