@@ -1,19 +1,22 @@
 import { useState, useEffect } from "react";
-import { User, Settings, Bell, Shield, Moon, LogOut, ChevronRight, Heart, Sparkles, Clock } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { User, Settings as SettingsIcon, Bell, Shield, Moon, LogOut, ChevronRight, Heart, Sparkles, Clock } from "lucide-react";
 import { BottomNav } from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { supabase, type Profile as ProfileType } from "@/lib/supabase";
 import { pushNotificationService } from "@/lib/notifications";
 import { toast } from "sonner";
 
 const ProfileNew = () => {
+  const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [profile, setProfile] = useState<ProfileType | null>(null);
   const [notifications, setNotifications] = useState(true);
   const [pushEnabled, setPushEnabled] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -21,20 +24,7 @@ const ProfileNew = () => {
       fetchProfile();
     }
     checkPushStatus();
-    // Load dark mode preference from localStorage on mount
-    loadDarkModePreference();
   }, [user]);
-
-  const loadDarkModePreference = () => {
-    const saved = localStorage.getItem('darkMode');
-    const isDark = saved === 'true';
-    setDarkMode(isDark);
-    if (isDark) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  };
 
   const checkPushStatus = () => {
     if (pushNotificationService.isSupported()) {
@@ -60,20 +50,6 @@ const ProfileNew = () => {
       });
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleDarkModeToggle = (checked: boolean) => {
-    setDarkMode(checked);
-    // Save to localStorage
-    localStorage.setItem('darkMode', checked.toString());
-    
-    if (checked) {
-      document.documentElement.classList.add('dark');
-      toast.success("Dark mode enabled", { description: "Easier on the eyes during evening devotions" });
-    } else {
-      document.documentElement.classList.remove('dark');
-      toast.success("Light mode enabled", { description: "Bright and uplifting" });
     }
   };
 
@@ -281,7 +257,7 @@ const ProfileNew = () => {
               </div>
               <span className="font-medium text-foreground">Dark Mode</span>
             </div>
-            <Switch checked={darkMode} onCheckedChange={handleDarkModeToggle} />
+            <Switch checked={theme === 'dark'} onCheckedChange={toggleTheme} />
           </div>
 
           {/* About */}
@@ -300,12 +276,12 @@ const ProfileNew = () => {
 
           {/* Settings */}
           <button 
-            onClick={() => handleMenuClick("Settings")}
+            onClick={() => navigate('/settings')}
             className="w-full flex items-center justify-between px-4 py-4 hover:bg-muted/50 transition-colors"
           >
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
-                <Settings className="w-5 h-5 text-muted-foreground" />
+                <SettingsIcon className="w-5 h-5 text-muted-foreground" />
               </div>
               <span className="font-medium text-foreground">Settings</span>
             </div>
