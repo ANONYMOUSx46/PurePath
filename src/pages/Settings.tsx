@@ -133,6 +133,9 @@ const Settings = () => {
 
       if (error) throw error;
 
+      // Refetch the profile to get updated data
+      await fetchProfile();
+
       toast.success('Profile updated!', {
         description: 'Your profile has been saved successfully.',
       });
