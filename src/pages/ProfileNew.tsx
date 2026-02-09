@@ -24,6 +24,23 @@ const ProfileNew = () => {
       fetchProfile();
     }
     checkPushStatus();
+
+    // Refetch profile when tab/window becomes visible (user returns from settings)
+    const handleVisibilityChange = () => {
+      if (!document.hidden && user) {
+        fetchProfile();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', () => {
+      if (user) fetchProfile();
+    });
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', () => {});
+    };
   }, [user]);
 
   const checkPushStatus = () => {
@@ -158,15 +175,23 @@ const ProfileNew = () => {
           <div className="bg-card rounded-2xl p-6 text-center">
             <div className="relative w-24 h-24 mx-auto mb-4">
               <div className="absolute inset-0 rounded-full gradient-golden animate-pulse-gentle" />
-              <div className="relative w-full h-full rounded-full gradient-golden flex items-center justify-center shadow-glow">
-                <User className="w-12 h-12 text-primary-foreground" />
-              </div>
+              {profile?.avatar_url ? (
+                <img
+                  src={profile.avatar_url}
+                  alt="Profile"
+                  className="relative w-full h-full rounded-full object-cover shadow-glow"
+                />
+              ) : (
+                <div className="relative w-full h-full rounded-full gradient-golden flex items-center justify-center shadow-glow">
+                  <User className="w-12 h-12 text-primary-foreground" />
+                </div>
+              )}
               <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full gradient-calm flex items-center justify-center shadow-teal">
                 <Sparkles className="w-4 h-4 text-accent-foreground" />
               </div>
             </div>
             <h2 className="font-serif text-2xl font-bold text-foreground mb-1">
-              {user?.email?.split('@')[0] || 'User'}
+              {profile?.username || user?.email?.split('@')[0] || 'User'}
             </h2>
             <p className="text-sm text-muted-foreground mb-2">{user?.email}</p>
             <p className="text-xs text-muted-foreground">
@@ -301,7 +326,7 @@ const ProfileNew = () => {
 
         {/* Version */}
         <p className="text-center text-xs text-muted-foreground pb-4">
-          PurePath v1.0.0 • Made with ❤️ By Liam De Wet
+          PurePath v1.1.0 • Made with ❤️ By Liam De Wet
         </p>
       </main>
 
