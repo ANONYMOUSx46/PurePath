@@ -6,7 +6,7 @@ import { TemptationMode } from "@/components/TemptationMode";
 import { QuickActions } from "@/components/QuickActions";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/lib/supabase";
+import { supabase, type Profile as ProfileType } from "@/lib/supabase";
 import { Flame, Check, Trophy, TrendingUp, Calendar, Loader2, Play } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -22,6 +22,7 @@ interface StreakData {
 const IndexNew = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [profile, setProfile] = useState<ProfileType | null>(null);
   const [streak, setStreak] = useState<StreakData>({
     currentStreak: 0,
     longestStreak: 0,
@@ -52,10 +53,10 @@ const IndexNew = () => {
     try {
       setIsLoading(true);
 
-      // Get user profile
-      const { data: profile, error: profileError } = await supabase
+      // Get user profile with all fields including username and avatar
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('streak_current, streak_longest')
+        .select('*')
         .eq('id', user.id)
         .single();
 
@@ -68,6 +69,9 @@ const IndexNew = () => {
         }
         throw profileError;
       }
+
+      // Save profile to state
+      setProfile(profileData);
 
       // Get today's check-in
       const today = new Date().toISOString().split('T')[0];
@@ -88,8 +92,8 @@ const IndexNew = () => {
         .maybeSingle();
 
       setStreak({
-        currentStreak: profile?.streak_current || 0,
-        longestStreak: profile?.streak_longest || 0,
+        currentStreak: profileData?.streak_current || 0,
+        longestStreak: profileData?.streak_longest || 0,
         lastCheckIn: lastLog?.log_date || null,
         canCheckInToday: !todayLog,
         todayCheckedIn: !!todayLog,
@@ -241,7 +245,9 @@ const IndexNew = () => {
       <header className="px-6 pt-12 pb-6">
         <div className="animate-fade-in">
           <p className="text-muted-foreground text-sm mb-1">{greeting}</p>
-          <h1 className="font-serif text-3xl font-bold text-foreground">{user?.email?.split('@')[0] || 'Friend'}</h1>
+          <h1 className="font-serif text-3xl font-bold text-foreground">
+            {profile?.username || user?.email?.split('@')[0] || 'Friend'}
+          </h1>
         </div>
       </header>
 
