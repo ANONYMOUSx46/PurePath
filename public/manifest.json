@@ -1,18 +1,54 @@
 {
   "name": "PurePath - Spiritual Growth",
   "short_name": "PurePath",
-  "description": "Your personal guide to spiritual growth",
+  "description": "Your companion for spiritual growth and accountability",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#fef9f3",
-  "theme_color": "#d97706",
+  "background_color": "#F8F6F3",
+  "theme_color": "#D4A574",
   "orientation": "portrait",
   "icons": [
+    {
+      "src": "/icon-72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
     {
       "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "/icon-512.png",
