@@ -1,12 +1,12 @@
-import { Home, BookOpen, PenLine, Flame, User } from "lucide-react";
+import { Home, BookOpen, PenLine, TrendingUp, User } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { icon: Home, label: "Home", path: "/" },
   { icon: BookOpen, label: "Scripture", path: "/scripture" },
+  { icon: TrendingUp, label: "Growth", path: "/growth" },
   { icon: PenLine, label: "Journal", path: "/journal" },
-  { icon: Flame, label: "Journey", path: "/journey" },
   { icon: User, label: "Profile", path: "/profile" },
 ];
 
@@ -25,7 +25,7 @@ export function BottomNav() {
               key={item.path}
               to={item.path}
               className={cn(
-                "flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all duration-300",
+                "flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all duration-300",
                 isActive 
                   ? "text-primary bg-primary/10" 
                   : "text-muted-foreground hover:text-foreground hover:bg-muted"
