@@ -9,6 +9,7 @@ import IndexNew from "./pages/IndexNew";
 import ScriptureNew from "./pages/ScriptureNew";
 import JournalNew from "./pages/JournalNew";
 import JourneyNew from "./pages/JourneyNew";
+import GrowthDashboard from "./pages/GrowthDashboard";
 import ProfileNew from "./pages/ProfileNew";
 import Settings from "./pages/Settings";
 import Auth from "./pages/Auth";
@@ -82,6 +83,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <IndexNew />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/growth"
+                element={
+                  <ProtectedRoute>
+                    <GrowthDashboard />
                   </ProtectedRoute>
                 }
               />
