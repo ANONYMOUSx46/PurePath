@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Search, BookOpen, Bookmark, Clock, ChevronRight, BookMarked, Sparkles, Heart } from "lucide-react"
+import { Search, BookOpen, Bookmark, Clock, ChevronRight, BookMarked, Sparkles, Heart, GraduationCap, Shield, LifeBuoy, ChevronDown } from "lucide-react"
 import { BottomNav } from "@/components/BottomNav"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,7 +10,123 @@ import { bibleService, BIBLE_BOOKS, type BibleVerse, type BibleChapter } from "@
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 
-type ViewMode = 'browse' | 'read' | 'search' | 'bookmarks'
+type ViewMode = 'browse' | 'read' | 'search' | 'bookmarks' | 'guide'
+
+// ── Bible Guide Data ──────────────────────────────────────────────────────────
+
+interface GuideRef {
+  label: string
+  book: string
+  chapter: number
+  verses?: string   // display only e.g. "3" or "4-5"
+  reference: string // full human label
+}
+
+interface GuideItem {
+  title: string
+  refs: GuideRef[]
+  note?: string
+}
+
+interface GuideSection {
+  id: string
+  title: string
+  subtitle: string
+  icon: 'shield' | 'heart' | 'lifebuoy'
+  color: string
+  items: GuideItem[]
+}
+
+const GUIDE_SECTIONS: GuideSection[] = [
+  {
+    id: 'rules',
+    title: "God's Game Plan",
+    subtitle: "The Ten Commandments & the law of love",
+    icon: 'shield',
+    color: 'text-golden-glow',
+    items: [
+      {
+        title: "The Ten Commandments",
+        note: "God gave us these rules to live by — not to restrict us, but to protect us and help us thrive.",
+        refs: [
+          { label: "Rule 1 — No other gods", book: "Exodus", chapter: 20, verses: "3",     reference: "Exodus 20:3" },
+          { label: "Rule 2 — No idols",       book: "Exodus", chapter: 20, verses: "4-5",   reference: "Exodus 20:4-5" },
+          { label: "Rule 3 — God's name",      book: "Exodus", chapter: 20, verses: "7",     reference: "Exodus 20:7" },
+          { label: "Rule 4 — Keep the Sabbath",book: "Exodus", chapter: 20, verses: "8-10",  reference: "Exodus 20:8-10" },
+          { label: "Rule 5 — Honour parents",  book: "Exodus", chapter: 20, verses: "12",    reference: "Exodus 20:12" },
+          { label: "Rule 6 — Do not murder",   book: "Exodus", chapter: 20, verses: "13",    reference: "Exodus 20:13" },
+          { label: "Rule 7 — Do not commit adultery", book: "Exodus", chapter: 20, verses: "14", reference: "Exodus 20:14" },
+          { label: "Rule 8 — Do not steal",    book: "Exodus", chapter: 20, verses: "15",    reference: "Exodus 20:15" },
+          { label: "Rule 9 — Do not lie",      book: "Exodus", chapter: 20, verses: "16",    reference: "Exodus 20:16" },
+          { label: "Rule 10 — Do not covet",   book: "Exodus", chapter: 20, verses: "17",    reference: "Exodus 20:17" },
+        ],
+      },
+      {
+        title: "Jesus' Summary of the Law",
+        note: "Jesus condensed all the commandments into two great principles.",
+        refs: [
+          { label: "Love God & love your neighbour", book: "Matthew", chapter: 22, verses: "37-40", reference: "Matthew 22:37-40" },
+        ],
+      },
+      {
+        title: "Understanding Sin",
+        note: "Paul uses the image of an athlete to help us think about self-discipline and avoiding sin.",
+        refs: [
+          { label: "Run to win — self-discipline", book: "1 Corinthians", chapter: 9, verses: "24-27", reference: "1 Corinthians 9:24-27" },
+        ],
+      },
+      {
+        title: "God's Grace & Forgiveness",
+        note: "God is not waiting to condemn us — He is waiting to forgive us.",
+        refs: [
+          { label: "The blessing of forgiveness", book: "Psalms", chapter: 32, verses: "1-5", reference: "Psalm 32:1-5" },
+          { label: "How many times to forgive?",   book: "Matthew", chapter: 18, verses: "21-22", reference: "Matthew 18:21-22" },
+          { label: "Forgiving others",             book: "2 Corinthians", chapter: 2, verses: "7",    reference: "2 Corinthians 2:7" },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'help',
+    title: "Help & Advice",
+    subtitle: "What the Bible says when life gets hard",
+    icon: 'lifebuoy',
+    color: 'text-spiritual-teal',
+    items: [
+      { title: "Anger",         refs: [{ label: "Let go of bitterness & rage", book: "Ephesians",      chapter: 4, verses: "31",    reference: "Ephesians 4:31" }] },
+      { title: "Anxiety",       refs: [{ label: "God is our refuge and strength", book: "Psalms",      chapter: 46, verses: "",     reference: "Psalm 46" }] },
+      { title: "Body",          refs: [
+          { label: "Your body is a temple",           book: "1 Corinthians", chapter: 6,  verses: "19-20",  reference: "1 Corinthians 6:19-20" },
+          { label: "The resurrection body",           book: "1 Corinthians", chapter: 15, verses: "35-57",  reference: "1 Corinthians 15:35-57" },
+        ]},
+      { title: "Depression",    refs: [{ label: "Nothing can separate us from God's love", book: "Romans",         chapter: 8,  verses: "28-39",  reference: "Romans 8:28-39" }] },
+      { title: "Gossip",        refs: [{ label: "Only words that build up",                book: "Ephesians",      chapter: 4,  verses: "29",     reference: "Ephesians 4:29" }] },
+      { title: "Loneliness",    refs: [{ label: "He lifted me out of the pit",             book: "Psalms",         chapter: 40, verses: "1-3",    reference: "Psalm 40:1-3" }] },
+      { title: "Loose Morals",  refs: [{ label: "Be careful how you live",                 book: "Ephesians",      chapter: 5,  verses: "15-18",  reference: "Ephesians 5:15-18" }] },
+      { title: "Love for Each Other", refs: [{ label: "Love covers a multitude of sins",  book: "1 Peter",        chapter: 4,  verses: "8",      reference: "1 Peter 4:8" }] },
+      { title: "Peer Pressure", refs: [{ label: "Wisdom from parents, warning against bad crowds", book: "Proverbs", chapter: 1, verses: "8-19", reference: "Proverbs 1:8-19" }] },
+      { title: "Swearing",      refs: [{ label: "Taming the tongue",                       book: "James",          chapter: 3,  verses: "8-9",    reference: "James 3:8-9" }] },
+      { title: "Temptation",    refs: [{ label: "Flee youthful lusts",                     book: "2 Timothy",      chapter: 2,  verses: "22",     reference: "2 Timothy 2:22" }] },
+      { title: "Witnessing",    refs: [{ label: "You will be my witnesses",                book: "Acts",           chapter: 1,  verses: "8",      reference: "Acts 1:8" }] },
+    ],
+  },
+]
+
+// Map display book names to the keys used by bibleService / BIBLE_BOOKS
+const BOOK_NAME_MAP: Record<string, string> = {
+  "Exodus":         "Exodus",
+  "Matthew":        "Matthew",
+  "1 Corinthians":  "1 Corinthians",
+  "2 Corinthians":  "2 Corinthians",
+  "Psalms":         "Psalms",
+  "Romans":         "Romans",
+  "Ephesians":      "Ephesians",
+  "1 Peter":        "1 Peter",
+  "Proverbs":       "Proverbs",
+  "James":          "James",
+  "2 Timothy":      "2 Timothy",
+  "Acts":           "Acts",
+}
 
 const ScriptureNew = () => {
   const { user } = useAuth()
@@ -216,6 +332,10 @@ const ScriptureNew = () => {
             <Button variant="soft" onClick={() => setViewMode('bookmarks')}>
               <Bookmark className="w-4 h-4 mr-2" />
               Bookmarks
+            </Button>
+            <Button variant="soft" onClick={() => setViewMode('guide')}>
+              <GraduationCap className="w-4 h-4 mr-2" />
+              Bible Guide
             </Button>
             <Button variant="soft" onClick={() => {
               setSelectedBook('Psalms')
@@ -511,7 +631,189 @@ const ScriptureNew = () => {
     )
   }
 
+  // ── Guide view ──────────────────────────────────────────────────────────────
+  if (viewMode === 'guide') {
+    return <BibleGuideView
+      onBack={() => setViewMode('browse')}
+      onOpenChapter={(book, chapter) => {
+        setSelectedBook(BOOK_NAME_MAP[book] ?? book)
+        setSelectedChapter(chapter)
+        // loadChapter is triggered by the useEffect watching selectedBook/selectedChapter
+      }}
+    />
+  }
+
   return null
+}
+
+// ── Bible Guide sub-component ─────────────────────────────────────────────────
+
+function BibleGuideView({
+  onBack,
+  onOpenChapter,
+}: {
+  onBack: () => void
+  onOpenChapter: (book: string, chapter: number) => void
+}) {
+  const [openSection, setOpenSection] = useState<string | null>('rules')
+  const [openItem, setOpenItem] = useState<string | null>(null)
+
+  const toggleSection = (id: string) =>
+    setOpenSection(prev => (prev === id ? null : id))
+
+  const toggleItem = (key: string) =>
+    setOpenItem(prev => (prev === key ? null : key))
+
+  const IconComponent = ({ icon, className }: { icon: GuideSection['icon']; className?: string }) => {
+    if (icon === 'shield')    return <Shield    className={className} />
+    if (icon === 'lifebuoy')  return <LifeBuoy  className={className} />
+    return <GraduationCap className={className} />
+  }
+
+  return (
+    <div className="min-h-screen gradient-peace pb-24">
+      {/* Header */}
+      <header className="px-6 pt-12 pb-6 sticky top-0 bg-background/95 backdrop-blur-lg z-10 border-b border-border">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={onBack}>
+            ←
+          </Button>
+          <div>
+            <h1 className="font-serif text-2xl font-bold text-foreground">Bible Guide</h1>
+            <p className="text-sm text-muted-foreground">Where to find what you need</p>
+          </div>
+        </div>
+      </header>
+
+      <main className="px-6 py-6 space-y-4">
+        {/* Intro card */}
+        <div className="gradient-card rounded-2xl p-5 shadow-card border-l-4 border-primary animate-fade-in">
+          <div className="flex items-center gap-2 mb-2">
+            <GraduationCap className="w-5 h-5 text-primary" />
+            <span className="font-medium text-foreground">Your Bible Companion</span>
+          </div>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Not sure where to turn in the Bible? Tap any reference below to open it directly, or explore God's rules and His advice for everyday life.
+          </p>
+        </div>
+
+        {/* Sections */}
+        {GUIDE_SECTIONS.map((section) => {
+          const isOpen = openSection === section.id
+
+          return (
+            <div key={section.id} className="gradient-card rounded-2xl shadow-card overflow-hidden animate-fade-in">
+              {/* Section header */}
+              <button
+                className="w-full flex items-center justify-between p-5 text-left"
+                onClick={() => toggleSection(section.id)}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={cn(
+                    "w-10 h-10 rounded-xl flex items-center justify-center",
+                    section.id === 'rules'  ? "bg-golden-light/20"       : "bg-spiritual-teal/15"
+                  )}>
+                    <IconComponent icon={section.icon} className={cn("w-5 h-5", section.color)} />
+                  </div>
+                  <div>
+                    <h2 className="font-serif text-lg font-semibold text-foreground">{section.title}</h2>
+                    <p className="text-xs text-muted-foreground">{section.subtitle}</p>
+                  </div>
+                </div>
+                <ChevronDown className={cn(
+                  "w-5 h-5 text-muted-foreground transition-transform duration-300",
+                  isOpen && "rotate-180"
+                )} />
+              </button>
+
+              {/* Section body */}
+              {isOpen && (
+                <div className="border-t border-border divide-y divide-border">
+                  {section.items.map((item, itemIdx) => {
+                    const itemKey = `${section.id}-${itemIdx}`
+                    const isItemOpen = openItem === itemKey
+
+                    return (
+                      <div key={itemKey}>
+                        {/* Item header — click to expand if it has >1 ref or a note */}
+                        {(item.refs.length > 1 || item.note) ? (
+                          <button
+                            className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-muted/40 transition-colors"
+                            onClick={() => toggleItem(itemKey)}
+                          >
+                            <div className="flex-1 pr-3">
+                              <p className="font-medium text-foreground text-sm">{item.title}</p>
+                              {!isItemOpen && (
+                                <p className="text-xs text-muted-foreground mt-0.5">
+                                  {item.refs.map(r => r.reference).join(' · ')}
+                                </p>
+                              )}
+                            </div>
+                            <ChevronDown className={cn(
+                              "w-4 h-4 text-muted-foreground transition-transform duration-200 shrink-0",
+                              isItemOpen && "rotate-180"
+                            )} />
+                          </button>
+                        ) : (
+                          /* Single ref, no note — tap goes straight to the chapter */
+                          <button
+                            className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-muted/40 transition-colors"
+                            onClick={() => onOpenChapter(item.refs[0].book, item.refs[0].chapter)}
+                          >
+                            <div>
+                              <p className="font-medium text-foreground text-sm">{item.title}</p>
+                              <p className="text-xs text-muted-foreground mt-0.5">{item.refs[0].reference}</p>
+                            </div>
+                            <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                          </button>
+                        )}
+
+                        {/* Expanded item */}
+                        {isItemOpen && (
+                          <div className="px-5 pb-4 space-y-3 bg-muted/20">
+                            {item.note && (
+                              <p className="text-sm text-muted-foreground leading-relaxed pt-2 italic">
+                                {item.note}
+                              </p>
+                            )}
+                            <div className="space-y-2">
+                              {item.refs.map((ref, refIdx) => (
+                                <button
+                                  key={refIdx}
+                                  className="w-full flex items-center justify-between p-3 rounded-xl bg-card hover:bg-card/80 shadow-soft transition-all text-left"
+                                  onClick={() => onOpenChapter(ref.book, ref.chapter)}
+                                >
+                                  <div>
+                                    <p className="text-sm font-medium text-foreground">{ref.label}</p>
+                                    <p className="text-xs text-primary font-medium mt-0.5">{ref.reference}</p>
+                                  </div>
+                                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                    <BookOpen className="w-3 h-3" />
+                                    <span>Read</span>
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )
+        })}
+
+        {/* Footer note */}
+        <p className="text-center text-xs text-muted-foreground pb-2">
+          Tap any reference to open it in the Bible reader
+        </p>
+      </main>
+
+      <BottomNav />
+    </div>
+  )
 }
 
 export default ScriptureNew
