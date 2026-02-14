@@ -2,33 +2,111 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/svg+xml" href="/Faviconn.svg">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
-    
-    <title>PurePath</title>
-    <meta name="description" content="Personal Guide to being better" />
-    <meta name="author" content="Liam De Wet" />
+    <title>PurePath - Spiritual Growth Companion</title>
+    <meta name="description" content="Your companion for spiritual growth, accountability, and daily devotion" />
+    <meta name="author" content="Guardian" />
 
-    
-    <meta property="og:title" content="PurePath" />
-    <meta property="og:description" content="Guide to being better" />
-    <meta property="og:type" content="website" />
-    
+    <!-- ── PWA ─────────────────────────────────────────────────────────── -->
+    <link rel="manifest" href="/manifest.json" />
 
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@God" />
+    <!-- Prevent white flash: match app background before React mounts -->
+    <style>
+      html, body, #root {
+        margin: 0;
+        padding: 0;
+        min-height: 100%;
+        /* Warm off-white that matches gradient-peace */
+        background-color: #F8F6F3;
+      }
+      /* Simple centred spinner shown before React takes over */
+      #splash {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #F8F6F3 0%, #F0EBE3 100%);
+        z-index: 9999;
+        transition: opacity 0.3s ease;
+      }
+      #splash.hidden { opacity: 0; pointer-events: none; }
+      #splash-ring {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        border: 3px solid #E8D5B7;
+        border-top-color: #D4A574;
+        animation: spin 0.8s linear infinite;
+      }
+      #splash-text {
+        margin-top: 16px;
+        font-family: Georgia, serif;
+        font-size: 18px;
+        color: #8B7355;
+        letter-spacing: 0.05em;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
 
-    <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#d97706">
-    <link rel="apple-touch-icon" href="/icon-192.png">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    
+    <!-- Theme colours -->
+    <meta name="theme-color" content="#D4A574" />
+    <meta name="msapplication-TileColor" content="#D4A574" />
+
+    <!-- iOS PWA -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="PurePath" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/icon-152.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icon-192.png" />
+
+    <!-- Android / Chrome -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="application-name" content="PurePath" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
   </head>
 
   <body>
+    <!-- Splash screen — hidden once React mounts -->
+    <div id="splash">
+      <div id="splash-ring"></div>
+      <div id="splash-text">PurePath</div>
+    </div>
+
     <div id="root"></div>
+
+    <!-- Vite entry point -->
     <script type="module" src="/src/main.tsx"></script>
+
+    <!-- Remove splash once the app is interactive -->
+    <script>
+      window.__hideSplash = function () {
+        var s = document.getElementById('splash');
+        if (s) {
+          s.classList.add('hidden');
+          setTimeout(function () { s.remove(); }, 350);
+        }
+      };
+    </script>
+
+    <!-- Register service worker -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register('/sw.js', { scope: '/' })
+            .then(function (reg) {
+              console.log('[App] SW registered', reg.scope);
+            })
+            .catch(function (err) {
+              console.warn('[App] SW registration failed:', err);
+            });
+        });
+      }
+    </script>
   </body>
 </html>
