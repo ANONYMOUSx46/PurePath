@@ -2,12 +2,13 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { BottomNav } from "@/components/BottomNav";
 import { DailyVerse } from "@/components/DailyVerse";
+import { SaintOfTheDay } from "@/components/SaintOfTheDay";
 import { TemptationMode } from "@/components/TemptationMode";
 import { QuickActions } from "@/components/QuickActions";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase, type Profile as ProfileType } from "@/lib/supabase";
-import { Flame, Check, Trophy, TrendingUp, Calendar, Loader2, Play } from "lucide-react";
+import { Flame, Check, Trophy, TrendingUp, Calendar, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -361,7 +362,7 @@ const IndexNew = () => {
           </div>
         </div>
 
-        {/* Daily Verse */}
+        {/* Psalm of Encouragement (was Daily Verse) */}
         <DailyVerse 
           verse="The Lord is my shepherd; I shall not want. He makes me lie down in green pastures. He leads me beside still waters. He restores my soul."
           reference="Psalm 23:1-3"
@@ -374,33 +375,8 @@ const IndexNew = () => {
           <QuickActions onTemptationMode={() => setShowTemptationMode(true)} />
         </div>
 
-        {/* Recommended Talk Preview - NOW CLICKABLE */}
-        <button 
-          onClick={() => navigate('/journey')}
-          className="w-full gradient-card rounded-2xl p-6 shadow-card animate-fade-in hover:shadow-glow transition-all duration-300 text-left group"
-          style={{ animationDelay: "0.3s" }}
-        >
-          <h3 className="font-serif text-lg font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">
-            Today's Reflection
-          </h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            Save inspiring videos and talks to watch anytime. Tap to add your first video!
-          </p>
-          <div className="w-full h-32 rounded-xl bg-muted flex items-center justify-center group-hover:bg-muted/80 transition-colors relative overflow-hidden">
-            {/* Animated background */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
-            
-            {/* Play button */}
-            <div className="w-16 h-16 rounded-full gradient-golden flex items-center justify-center shadow-glow group-hover:scale-110 transition-transform relative z-10">
-              <Play className="w-8 h-8 text-primary-foreground ml-1" />
-            </div>
-          </div>
-          
-          {/* Hint text */}
-          <p className="text-xs text-center text-muted-foreground mt-3 group-hover:text-primary transition-colors">
-            Tap to explore your video library →
-          </p>
-        </button>
+        {/* Saint of the Day (replaces Today's Reflection video card) */}
+        <SaintOfTheDay />
       </main>
 
       {/* Temptation Mode Overlay */}
