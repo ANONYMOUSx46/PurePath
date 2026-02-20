@@ -1,13 +1,12 @@
-// Service Worker for Push Notifications
-// public/sw.js
+// Service Worker - Offline-First PWA
 
-/* eslint-disable no-restricted-globals */
 
-const CACHE_NAME = 'guardian-v2';
 
-// Only cache these static assets — NOT the app shell HTML or JS bundles.
-// Vite hashes JS/CSS filenames on every build, so caching them here causes
-// the PWA to serve stale bundles → white screen after a redeploy.
+const CACHE_NAME = 'guardian-v3-offline';
+const BIBLE_CACHE = 'guardian-bible-v1';
+const DYNAMIC_CACHE = 'guardian-dynamic-v1';
+
+// Core static assets - always cached
 const STATIC_ASSETS = [
   '/icon-192.png',
   '/icon-512.png',
@@ -16,11 +15,10 @@ const STATIC_ASSETS = [
 
 // ── Install ───────────────────────────────────────────────────────────────────
 self.addEventListener('install', (event) => {
-  console.log('[SW] Installing');
+  console.log('[SW] Installing offline-first service worker');
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
   );
-  // Take control immediately — don't wait for old SW to die
   self.skipWaiting();
 });
 
@@ -31,7 +29,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((keys) =>
       Promise.all(
         keys
-          .filter((key) => key !== CACHE_NAME)
+          .filter((key) => ![CACHE_NAME, BIBLE_CACHE, DYNAMIC_CACHE].includes(key))
           .map((key) => {
             console.log('[SW] Deleting old cache:', key);
             return caches.delete(key);
@@ -43,44 +41,173 @@ self.addEventListener('activate', (event) => {
 });
 
 // ── Fetch ─────────────────────────────────────────────────────────────────────
-// Strategy:
-//   • Navigation requests (page loads) → always go to network.
-//     This ensures the latest index.html + hashed JS/CSS are always loaded.
-//     Falls back to cached /index.html only when fully offline.
-//   • Static assets (icons, manifest) → cache-first.
-//   • Everything else (API, Supabase, Bible API) → network-only.
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip non-GET requests and cross-origin requests (Supabase, APIs, etc.)
+  // Skip non-GET requests
   if (request.method !== 'GET') return;
-  if (url.origin !== self.location.origin) return;
 
-  // Navigation requests → network first, fallback to '/' for SPA routing
+  // ════════════════════════════════════════════════════════════════════════════
+  // NAVIGATION REQUESTS (page loads) - Network first, cache fallback
+  // ════════════════════════════════════════════════════════════════════════════
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request).catch(() =>
-        caches.match('/index.html').then((cached) => cached || fetch('/'))
-      )
+      fetch(request)
+        .then((response) => {
+          // Cache the successful response
+          const responseClone = response.clone();
+          caches.open(DYNAMIC_CACHE).then((cache) => {
+            cache.put(request, responseClone);
+          });
+          return response;
+        })
+        .catch(() => {
+          // Offline - serve cached version or index.html for SPA routing
+          return caches.match(request).then((cached) => 
+            cached || caches.match('/index.html')
+          );
+        })
     );
     return;
   }
 
-  // Static assets → cache first, then network
+  // ════════════════════════════════════════════════════════════════════════════
+  // STATIC ASSETS - Cache first
+  // ════════════════════════════════════════════════════════════════════════════
   if (
     url.pathname.startsWith('/icon') ||
     url.pathname === '/manifest.json' ||
-    url.pathname.startsWith('/badge')
+    url.pathname.startsWith('/badge') ||
+    url.pathname.endsWith('.png') ||
+    url.pathname.endsWith('.jpg') ||
+    url.pathname.endsWith('.svg')
   ) {
     event.respondWith(
-      caches.match(request).then((cached) => cached || fetch(request))
+      caches.match(request).then((cached) => {
+        if (cached) return cached;
+        
+        return fetch(request).then((response) => {
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(request, responseClone);
+          });
+          return response;
+        });
+      })
     );
     return;
   }
 
-  // JS/CSS bundles (hashed by Vite) → network always, no caching
-  // Returning without calling event.respondWith() lets the browser handle it normally
+  // ════════════════════════════════════════════════════════════════════════════
+  // BIBLE API REQUESTS - Cache with network update (stale-while-revalidate)
+  // ════════════════════════════════════════════════════════════════════════════
+  if (url.hostname === 'bible-api.com' || url.pathname.includes('/bible/')) {
+    event.respondWith(
+      caches.open(BIBLE_CACHE).then((cache) => {
+        return cache.match(request).then((cached) => {
+          const fetchPromise = fetch(request)
+            .then((response) => {
+              // Update cache with fresh data
+              cache.put(request, response.clone());
+              return response;
+            })
+            .catch(() => {
+              // Network failed, return cached version if available
+              return cached;
+            });
+
+          // Return cached immediately, update in background
+          return cached || fetchPromise;
+        });
+      })
+    );
+    return;
+  }
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // SUPABASE API - Network only with cache fallback for read operations
+  // ════════════════════════════════════════════════════════════════════════════
+  if (url.hostname.includes('supabase.co')) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          // Cache GET requests for offline viewing
+          if (request.method === 'GET' && response.ok) {
+            const responseClone = response.clone();
+            caches.open(DYNAMIC_CACHE).then((cache) => {
+              cache.put(request, responseClone);
+            });
+          }
+          return response;
+        })
+        .catch(() => {
+          // Offline - return cached data if available
+          return caches.match(request).then((cached) => {
+            if (cached) {
+              console.log('[SW] Serving cached Supabase data (offline mode)');
+              return cached;
+            }
+            // Return offline response
+            return new Response(
+              JSON.stringify({ 
+                offline: true, 
+                error: 'No internet connection',
+                message: 'You are offline. Some features may be limited.'
+              }),
+              { 
+                headers: { 'Content-Type': 'application/json' },
+                status: 503
+              }
+            );
+          });
+        })
+    );
+    return;
+  }
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // APP BUNDLE (JS/CSS) - Network first, cache fallback
+  // ════════════════════════════════════════════════════════════════════════════
+  if (url.pathname.startsWith('/assets/') || url.pathname.endsWith('.js') || url.pathname.endsWith('.css')) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          const responseClone = response.clone();
+          caches.open(DYNAMIC_CACHE).then((cache) => {
+            cache.put(request, responseClone);
+          });
+          return response;
+        })
+        .catch(() => {
+          return caches.match(request).then((cached) => {
+            if (cached) {
+              console.log('[SW] Serving cached bundle (offline mode)');
+              return cached;
+            }
+            throw new Error('Asset not in cache and offline');
+          });
+        })
+    );
+    return;
+  }
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // EVERYTHING ELSE - Network with cache fallback
+  // ════════════════════════════════════════════════════════════════════════════
+  if (url.origin === self.location.origin) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          const responseClone = response.clone();
+          caches.open(DYNAMIC_CACHE).then((cache) => {
+            cache.put(request, responseClone);
+          });
+          return response;
+        })
+        .catch(() => caches.match(request))
+    );
+  }
 });
 
 // Push event - show notification
@@ -88,7 +215,7 @@ self.addEventListener('push', (event) => {
   console.log('[SW] Push received:', event);
   
   let payload = {
-    title: 'Guardian',
+    title: 'PurePath',
     body: 'You have a new notification',
     icon: '/icon-192.png',
     badge: '/badge-72.png',
