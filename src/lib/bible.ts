@@ -1,5 +1,7 @@
-// Bible API service using Bible.js API (free, no key required)
+// Bible API service with offline caching support
 // Fallback to API.Bible for more features
+
+import { bibleCache } from './bibleCache'
 
 export interface BibleVerse {
   reference: string
@@ -98,27 +100,60 @@ export const BIBLE_BOOKS: BibleBook[] = [
 class BibleService {
   private baseURL = 'https://bible-api.com'
 
-  // Fetch a specific verse or passage
+  // Fetch a specific verse or passage with offline caching
   async getVerse(reference: string): Promise<BibleVerse | null> {
+    const cacheKey = `verse-${reference.toLowerCase().replace(/\s+/g, '-')}`
+    
     try {
+      // Try cache first for offline support
+      const cached = await bibleCache.get(cacheKey)
+      if (cached) {
+        console.log('[Bible] Serving cached verse:', reference)
+        return cached
+      }
+
+      // Fetch from network
       const response = await fetch(`${this.baseURL}/${encodeURIComponent(reference)}`)
       if (!response.ok) throw new Error('Verse not found')
       
       const data = await response.json()
-      return {
+      const verse: BibleVerse = {
         reference: data.reference,
         text: data.text.trim(),
         translation: data.translation_name || 'KJV',
       }
+
+      // Cache for offline use
+      await bibleCache.set(cacheKey, verse)
+      
+      return verse
     } catch (error) {
       console.error('Error fetching verse:', error)
+      
+      // Try cache as fallback
+      const cached = await bibleCache.get(cacheKey)
+      if (cached) {
+        console.log('[Bible] Network failed, serving cached verse:', reference)
+        return cached
+      }
+      
       return null
     }
   }
 
-  // Fetch an entire chapter
+  // Fetch an entire chapter with offline caching
   async getChapter(book: string, chapter: number): Promise<BibleChapter | null> {
+    const cacheKey = `chapter-${book.toLowerCase().replace(/\s+/g, '-')}-${chapter}`
+    
     try {
+      // Try cache first for offline support
+      const cached = await bibleCache.get(cacheKey)
+      if (cached) {
+        console.log('[Bible] Serving cached chapter:', book, chapter)
+        return cached
+      }
+
+      // Fetch from network
       const reference = `${book} ${chapter}`
       const response = await fetch(`${this.baseURL}/${encodeURIComponent(reference)}`)
       if (!response.ok) throw new Error('Chapter not found')
@@ -131,13 +166,26 @@ class BibleService {
         text: v.text.trim(),
       }))
 
-      return {
+      const chapterData: BibleChapter = {
         reference: data.reference,
         verses,
         translation: data.translation_name || 'KJV',
       }
+
+      // Cache for offline use
+      await bibleCache.set(cacheKey, chapterData)
+
+      return chapterData
     } catch (error) {
       console.error('Error fetching chapter:', error)
+      
+      // Try cache as fallback
+      const cached = await bibleCache.get(cacheKey)
+      if (cached) {
+        console.log('[Bible] Network failed, serving cached chapter:', book, chapter)
+        return cached
+      }
+      
       return null
     }
   }
@@ -197,6 +245,45 @@ class BibleService {
     }
 
     return results
+  }
+
+  // Check if we're online
+  isOnline(): boolean {
+    return typeof navigator !== 'undefined' ? navigator.onLine : true
+  }
+
+  // Preload commonly read chapters for offline use
+  async preloadPopularChapters(): Promise<void> {
+    const popularChapters = [
+      { book: 'John', chapter: 3 },
+      { book: 'Psalm', chapter: 23 },
+      { book: 'Romans', chapter: 8 },
+      { book: 'Matthew', chapter: 5 },
+      { book: 'John', chapter: 1 },
+      { book: 'Philippians', chapter: 4 },
+      { book: '1 Corinthians', chapter: 13 },
+      { book: 'Genesis', chapter: 1 },
+      { book: 'Proverbs', chapter: 3 },
+      { book: 'Isaiah', chapter: 53 },
+    ]
+
+    console.log('[Bible] Preloading popular chapters for offline use...')
+    
+    for (const { book, chapter } of popularChapters) {
+      try {
+        await this.getChapter(book, chapter)
+      } catch (error) {
+        console.error(`[Bible] Failed to preload ${book} ${chapter}:`, error)
+      }
+    }
+    
+    console.log('[Bible] Popular chapters preloaded')
+  }
+
+  // Clear all cached Bible data
+  async clearCache(): Promise<void> {
+    await bibleCache.clear()
+    console.log('[Bible] Cache cleared')
   }
 }
 
